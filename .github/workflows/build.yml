@@ -1,0 +1,119 @@
+name: 🛠️ Compilar Shadow Servants
+
+on:
+  push:
+    branches:
+      - "**"
+
+  pull_request:
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compilar:
+    name: 🚀 Compilar Mod Forge
+    runs-on: ubuntu-latest
+
+    steps:
+      # ─────────────────────────────────────────────
+      # Baixar o código do projeto
+      # ─────────────────────────────────────────────
+      - name: 📥 Baixar código do projeto
+        uses: actions/checkout@v4
+
+      # ─────────────────────────────────────────────
+      # Configurar Java 21
+      # ─────────────────────────────────────────────
+      - name: ☕ Configurar Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      # ─────────────────────────────────────────────
+      # Dar permissão ao Gradle Wrapper
+      # ─────────────────────────────────────────────
+      - name: 🔧 Preparar Gradle
+        run: chmod +x ./gradlew
+
+      # ─────────────────────────────────────────────
+      # Mostrar ambiente de compilação
+      # ─────────────────────────────────────────────
+      - name: 🔍 Verificar ambiente
+        run: |
+          echo "======================================"
+          echo "   SHADOW SERVANTS - COMPILAÇÃO"
+          echo "======================================"
+          echo ""
+          echo "Java:"
+          java -version
+          echo ""
+          echo "Gradle:"
+          ./gradlew --version
+          echo ""
+          echo "Minecraft: 1.21.1"
+          echo "Forge: 52.1.0"
+          echo "Java: 21"
+          echo ""
+
+      # ─────────────────────────────────────────────
+      # Limpar arquivos antigos
+      # ─────────────────────────────────────────────
+      - name: 🧹 Limpar projeto
+        run: ./gradlew clean --no-daemon
+
+      # ─────────────────────────────────────────────
+      # Compilar o mod
+      # ─────────────────────────────────────────────
+      - name: 🔨 Compilar Shadow Servants
+        run: ./gradlew build --no-daemon --stacktrace
+
+      # ─────────────────────────────────────────────
+      # Mostrar JAR gerado
+      # ─────────────────────────────────────────────
+      - name: 📦 Verificar JAR
+        run: |
+          echo "======================================"
+          echo "       JAR GERADO"
+          echo "======================================"
+          echo ""
+
+          if [ -z "$(find build/libs -name '*.jar' -type f)" ]; then
+            echo "❌ Nenhum JAR foi encontrado!"
+            exit 1
+          fi
+
+          find build/libs -name '*.jar' -type f -exec ls -lh {} \;
+
+      # ─────────────────────────────────────────────
+      # Guardar o JAR como Artifact
+      # ─────────────────────────────────────────────
+      - name: 📤 Enviar mod compilado
+        uses: actions/upload-artifact@v4
+        with:
+          name: Shadow-Servants-Forge-1.21.1-52.1.0
+          path: build/libs/*.jar
+          if-no-files-found: error
+          retention-days: 30
+
+      # ─────────────────────────────────────────────
+      # Resumo final
+      # ─────────────────────────────────────────────
+      - name: ✅ Compilação concluída
+        if: success()
+        run: |
+          echo "======================================"
+          echo "       ✅ COMPILAÇÃO CONCLUÍDA"
+          echo "======================================"
+          echo ""
+          echo "Shadow Servants foi compilado com sucesso!"
+          echo ""
+          echo "Minecraft: 1.21.1"
+          echo "Forge: 52.1.0"
+          echo "Java: 21"
+          echo ""
+          echo "O arquivo JAR está disponível nos Artifacts."
